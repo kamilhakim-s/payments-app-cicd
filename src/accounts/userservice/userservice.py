@@ -75,7 +75,9 @@ def _setup_tracing(app):
         app.logger.info("✅ Tracing enabled.")
         trace.set_tracer_provider(TracerProvider())
         cloud_trace_exporter = CloudTraceSpanExporter()
-        trace.get_tracer_provider().add_span_processor(BatchSpanProcessor(cloud_trace_exporter))
+        trace.get_tracer_provider().add_span_processor(
+            BatchSpanProcessor(cloud_trace_exporter)
+        )
         set_global_textmap(CloudTraceFormatPropagator())
         FlaskInstrumentor().instrument_app(app)
     else:
@@ -105,7 +107,9 @@ def _validate_new_user(req):
 
     # Verify username contains only 2-15 alphanumeric or underscore characters
     if not re.match(r"\A\w{2,15}\Z", req["username"]):
-        raise UserWarning("username must contain 2-15 alphanumeric characters or underscores")
+        raise UserWarning(
+            "username must contain 2-15 alphanumeric characters or underscores"
+        )
     # Check if passwords match
     if req["password"] != req["password-repeat"]:
         raise UserWarning("passwords do not match")
@@ -215,7 +219,9 @@ def _login_handler(app, users_db):
                 raise PermissionError("invalid login")
 
             full_name = "{} {}".format(user["firstname"], user["lastname"])
-            exp_time = datetime.now(timezone.utc) + timedelta(seconds=app.config["EXPIRY_SECONDS"])
+            exp_time = datetime.now(timezone.utc) + timedelta(
+                seconds=app.config["EXPIRY_SECONDS"]
+            )
             payload = {
                 "user": username,
                 "acct": user["accountid"],

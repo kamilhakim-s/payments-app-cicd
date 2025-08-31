@@ -61,8 +61,8 @@ jobs:
       - name: 🔒 Security scan with Bandit
         run: |
           cd ${{ env.SERVICE_PATH }}
-          bandit -r . -f json -o bandit-report.json || true
-          bandit -r . -ll
+          bandit -r . -f json -o bandit-report.json --exclude tests,target,htmlcov || true
+          bandit -r . -ll --exclude tests,target,htmlcov
 
       - name: 🛡️ Check dependencies for vulnerabilities
         run: |

@@ -106,7 +106,9 @@ class TestUserservice(unittest.TestCase):
         # assert user_object is equal to expected object
         expected_user_object = EXAMPLE_USER.copy()
         # convert time to string from datetime
-        expected_user_object["birthday"] = expected_user_object["birthday"].strftime(TIMESTAMP_FORMAT)
+        expected_user_object["birthday"] = expected_user_object["birthday"].strftime(
+            TIMESTAMP_FORMAT
+        )
         # not comparing passhash due to differences in salt
         expected_user_object.pop("passhash")
         # assert all keys are equal except for hashed pwd
@@ -124,7 +126,10 @@ class TestUserservice(unittest.TestCase):
         # assert 409 response code
         self.assertEqual(response.status_code, 409)
         # assert we get correct error message
-        self.assertEqual(response.data, "user {} already exists".format(example_user_request["username"]).encode())
+        self.assertEqual(
+            response.data,
+            "user {} already exists".format(example_user_request["username"]).encode(),
+        )
 
     def test_create_user_sql_error_500_status_code_error_message(self):
         """test creating a new user but throws SQL error when trying to add"""
@@ -239,7 +244,10 @@ class TestUserservice(unittest.TestCase):
         # assert 404 response
         self.assertEqual(response.status_code, 404)
         # assert we get correct error message
-        self.assertEqual(response.data, "user {} does not exist".format(example_user_request["username"]).encode())
+        self.assertEqual(
+            response.data,
+            "user {} does not exist".format(example_user_request["username"]).encode(),
+        )
 
     def test_create_user_400_status_code_invalid_username(
         self,
@@ -256,11 +264,17 @@ class TestUserservice(unittest.TestCase):
             example_user_request["username"] = invalid_username
             # send request to test client
             response = self.test_app.post("/users", data=example_user_request)
-            self.assertEqual(response.status_code, 400, "username {} returned incorrect status code".format(invalid_username))
+            self.assertEqual(
+                response.status_code,
+                400,
+                "username {} returned incorrect status code".format(invalid_username),
+            )
             if invalid_username:
                 # assert we get correct error message
                 self.assertEqual(
                     response.data,
                     "username must contain 2-15 alphanumeric characters or underscores".encode(),
-                    "username {} returned unexpected error message".format(invalid_username),
+                    "username {} returned unexpected error message".format(
+                        invalid_username
+                    ),
                 )
