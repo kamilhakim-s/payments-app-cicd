@@ -211,3 +211,6 @@ venv-*
 
 # go for ci
 go/
+
+src/accounts/accounts-db/initdb/*.sh
+DEPLOYMENT_GUIDE.md
