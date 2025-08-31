@@ -1,0 +1,25 @@
+[tool.black]
+line-length = 127
+target-version = ['py312']
+include = '\.pyi?$'
+extend-exclude = '''
+# A regex preceded by ^/ will apply only to files and directories
+# in the root of the project.
+^/target/  # exclude build directory
+'''
+
+[tool.isort]
+profile = "black"
+line_length = 127
+multi_line_output = 3
+
+[tool.bandit]
+exclude_dirs = ["tests", "target", "htmlcov"]
+skips = ["B101"]  # Skip assert_used test since asserts are OK in tests
+
+[tool.mypy]
+python_version = "3.12"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false  # Set to true for stricter typing
+ignore_missing_imports = true
