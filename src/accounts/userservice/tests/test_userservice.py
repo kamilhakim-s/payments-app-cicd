@@ -106,9 +106,7 @@ class TestUserservice(unittest.TestCase):
         # assert user_object is equal to expected object
         expected_user_object = EXAMPLE_USER.copy()
         # convert time to string from datetime
-        expected_user_object["birthday"] = expected_user_object["birthday"].strftime(
-            TIMESTAMP_FORMAT
-        )
+        expected_user_object["birthday"] = expected_user_object["birthday"].strftime(TIMESTAMP_FORMAT)
         # not comparing passhash due to differences in salt
         expected_user_object.pop("passhash")
         # assert all keys are equal except for hashed pwd
@@ -274,7 +272,5 @@ class TestUserservice(unittest.TestCase):
                 self.assertEqual(
                     response.data,
                     "username must contain 2-15 alphanumeric characters or underscores".encode(),
-                    "username {} returned unexpected error message".format(
-                        invalid_username
-                    ),
+                    "username {} returned unexpected error message".format(invalid_username),
                 )
