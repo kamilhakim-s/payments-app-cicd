@@ -1,6 +1,6 @@
 [tool.black]
 line-length = 127
-target-version = ['py312']
+target-version = ['py311']
 include = '\.pyi?$'
 extend-exclude = '''
 # A regex preceded by ^/ will apply only to files and directories
