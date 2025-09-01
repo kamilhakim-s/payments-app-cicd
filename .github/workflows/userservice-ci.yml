@@ -191,19 +191,29 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: ${{ env.IMAGE_NAME }}
+          # Optimized tagging strategy to minimize repository clutter:
+          # - main branch: 'userservice-main' + 'userservice-latest'
+          # - local-deploy branch: 'userservice-local-deploy'  
+          # - feature branches: 'userservice-feature-latest' (replaces previous)
+          # - releases (git tags): 'userservice-v1.2.3' format
           tags: |
-            type=ref,event=branch
-            type=ref,event=pr
-            type=sha,prefix=userservice-{{branch}}-
+            # For main branch: tag as 'main' and 'latest'
+            type=raw,value=userservice-main,enable={{is_default_branch}}
             type=raw,value=userservice-latest,enable={{is_default_branch}}
-            type=raw,value=userservice-{{date 'YYYYMMDD-HHmmss'}}
+            # For local-deploy branch: tag as 'local-deploy'
+            type=raw,value=userservice-local-deploy,enable=${{ github.ref_name == 'local-deploy' }}
+            # For feature branches: only 'feature-latest' (replaces previous)
+            type=raw,value=userservice-feature-latest,enable=${{ startsWith(github.ref_name, 'feature/') }}
+            # For releases (tags): use semantic version
+            type=semver,pattern={{version}},prefix=userservice-v
 
       - name: 🏗️ Build and push Docker image
         id: build
         uses: docker/build-push-action@v5
         with:
           context: ${{ env.SERVICE_PATH }}
-          push: ${{ github.event_name != 'pull_request' }}
+          # Only push for main, local-deploy, feature branches, and releases
+          push: ${{ github.event_name != 'pull_request' && (github.ref_name == 'main' || github.ref_name == 'local-deploy' || startsWith(github.ref_name, 'feature/') || github.ref_type == 'tag') }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
@@ -213,8 +223,8 @@ jobs:
       - name: 🧪 Test Docker image
         if: github.event_name == 'pull_request'
         run: |
-          # For PRs, only build and test locally
-          echo "✅ Docker image built successfully (PR - no push)"
+          # For PRs, only build and test locally (no push)
+          echo "✅ Docker image built successfully (PR - no push to registry)"
 
       - name: 📊 Build Summary
         run: |
@@ -222,9 +232,14 @@ jobs:
           echo "- ✅ Docker image built successfully" >> $GITHUB_STEP_SUMMARY
           echo "- 🏷️ **Tags:** ${{ steps.meta.outputs.tags }}" >> $GITHUB_STEP_SUMMARY
           echo "- 🔍 **Platforms:** linux/amd64, linux/arm64" >> $GITHUB_STEP_SUMMARY
-          echo "- 📦 **Registry:** ${{ github.event_name != 'pull_request' && 'Docker Hub' || 'Local only (PR)' }}" >> $GITHUB_STEP_SUMMARY
-          if [[ "${{ github.event_name }}" != "pull_request" ]]; then
+          
+          # Determine push status based on branch
+          SHOULD_PUSH="${{ github.event_name != 'pull_request' && (github.ref_name == 'main' || github.ref_name == 'local-deploy' || startsWith(github.ref_name, 'feature/') || github.ref_type == 'tag') }}"
+          if [[ "$SHOULD_PUSH" == "true" ]]; then
+            echo "- 📦 **Registry:** Docker Hub (pushed)" >> $GITHUB_STEP_SUMMARY
             echo "- 🌐 **Image URL:** https://hub.docker.com/r/${{ env.IMAGE_NAME }}" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- 📦 **Registry:** Local only (not pushed)" >> $GITHUB_STEP_SUMMARY
           fi
 
   # ========================================
