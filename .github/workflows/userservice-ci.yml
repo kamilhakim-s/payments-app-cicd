@@ -2,7 +2,7 @@ name: UserService CI Pipeline
 
 on:
   push:
-    branches: [ main, feature/* ]
+    branches: [ main, local-deploy, feature/* ]
     paths:
       - 'src/accounts/userservice/**'
       - '.github/workflows/userservice-ci.yml'
