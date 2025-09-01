@@ -20,6 +20,7 @@ import string
 from Crypto.PublicKey import RSA
 import jwt
 
+
 def generate_rsa_key():
     """Generate priv,pub key pair for test"""
     key = RSA.generate(2048)
@@ -27,9 +28,13 @@ def generate_rsa_key():
     public_key = key.publickey().export_key()
     return private_key, public_key
 
+
 def get_random_string(length):
     """Generate random string of given length"""
-    return ''.join(random.choice(string.ascii_lowercase) for i in range(length))
+    return "".join(
+        random.choice(string.ascii_lowercase) for i in range(length)
+    )
+
 
 EXAMPLE_PRIVATE_KEY, EXAMPLE_PUBLIC_KEY = generate_rsa_key()
 
@@ -63,36 +68,37 @@ EXAMPLE_CONTACT = {
 
 # Account numbers must be 10 digit numbers
 INVALID_ACCOUNT_NUMS = [
-    None, # null
-    "", # empty
-    "123123123", # 9 digit number
-    "12312312312", # 11 digit number
-    "foobarbazq", # 10 char string
-    "123123123💸", # 9 digits and 1 emoji
-    ]
+    None,  # null
+    "",  # empty
+    "123123123",  # 9 digit number
+    "12312312312",  # 11 digit number
+    "foobarbazq",  # 10 char string
+    "123123123💸",  # 9 digits and 1 emoji
+]
 
-# Labels must be >0 and <=30 chars, alphanumeric and spaces, can't start with space
+# Labels must be >0 and <=30 chars, alphanumeric and spaces,
+# can't start with space
 INVALID_LABELS = [
-    None, # null
-    "", # empty string
-    " ", # only space
-    " label", # starting with space
-    "*$&%($", # non alphanumeric characters
-    "label*new", # alphanumeric with non alphanumeric characters
-    "🏦💸", # emojis
-    "label1💸", # alphanumeric with emojis
-    get_random_string(31), # 31 characters
-    " {}".format(get_random_string(30)), # 30 characters + leading space
-    "{} ".format(get_random_string(30)), # 30 characters + trailing space
-    "{}".format(get_random_string(100)), # 100 characters
-    ]
+    None,  # null
+    "",  # empty string
+    " ",  # only space
+    " label",  # starting with space
+    "*$&%($",  # non alphanumeric characters
+    "label*new",  # alphanumeric with non alphanumeric characters
+    "🏦💸",  # emojis
+    "label1💸",  # alphanumeric with emojis
+    get_random_string(31),  # 31 characters
+    " {}".format(get_random_string(30)),  # 30 characters + leading space
+    "{} ".format(get_random_string(30)),  # 30 characters + trailing space
+    "{}".format(get_random_string(100)),  # 100 characters
+]
 
 # Routing numbers must be 9 digit numbers
 INVALID_ROUTING_NUMS = [
-    None, # null
-    "", # empty
-    "12312312", # 8 digit number
-    "1231231231", # 10 digit number
-    "foobarbaz", # 9 char string
-    "12312312💸", # 8 digits and 1 emoji
-    ]
+    None,  # null
+    "",  # empty
+    "12312312",  # 8 digit number
+    "1231231231",  # 10 digit number
+    "foobarbaz",  # 9 char string
+    "12312312💸",  # 8 digits and 1 emoji
+]

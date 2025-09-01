@@ -36,6 +36,7 @@ from contacts.tests.constants import (
     INVALID_ROUTING_NUMS,
 )
 
+
 def create_new_contact(**kwargs):
     """Helper method for creating new contacts from template"""
     example_contact = EXAMPLE_CONTACT.copy()
@@ -110,16 +111,22 @@ class TestContacts(unittest.TestCase):
         self.assertEqual(response.status_code, 201)
         # assert contact object added to database had the required fields
         # get the arg that contact_db.add_contact was called with
-        contact_object = self.mocked_db.return_value.add_contact.call_args[0][0]
+        contact_object = self.mocked_db.return_value.add_contact.call_args[0][
+            0
+        ]
         # add username to example contact object
         example_contact["username"] = EXAMPLE_USER
         # assert all keys are equal
         self.assertEqual(contact_object, example_contact)
 
     def test_create_contact_409_status_code_add_same_user_to_contacts(self):
-        """test adding a contact with same account_num and routing_num as the user"""
-        # create example contact request and set account_num of contact equal to account_num of user
-        invalid_contact = create_new_contact(account_num=EXAMPLE_USER_PAYLOAD["acct"])
+        """test adding a contact with same account_num and routing_num
+        as the user"""
+        # create example contact request and set account_num of contact
+        # equal to account_num of user
+        invalid_contact = create_new_contact(
+            account_num=EXAMPLE_USER_PAYLOAD["acct"]
+        )
         # set local routing number in service to match user routing number
         self.flask_app.config["LOCAL_ROUTING"] = invalid_contact["routing_num"]
         # send request to test client
@@ -131,13 +138,13 @@ class TestContacts(unittest.TestCase):
         # assert 409 response code
         self.assertEqual(response.status_code, 409)
         # assert we get correct error message
-        self.assertEqual(
-            response.data, b"may not add yourself to contacts"
-        )
+        self.assertEqual(response.data, b"may not add yourself to contacts")
 
-    def test_create_contact_409_status_code_duplicate_contact_with_diff_label(self,):
+    def test_create_contact_409_status_code_duplicate_contact_with_diff_label(
+        self,
+    ):
         """test adding a duplicate contact with same account_num
-            and routing_num but different label"""
+        and routing_num but different label"""
         # mock return value of get_contacts to return default EXAMPLE_CONTACT
         self.mocked_db.return_value.get_contacts.return_value = [
             create_new_contact()
@@ -153,18 +160,21 @@ class TestContacts(unittest.TestCase):
         # assert 409 response code
         self.assertEqual(response.status_code, 409)
         # assert we get correct error message
-        self.assertEqual(
-            response.data, b"account already exists as a contact"
-        )
+        self.assertEqual(response.data, b"account already exists as a contact")
 
-    def test_create_contact_409_status_code_duplicate_contact_with_same_label(self,):
-        """test adding a duplicate contact with same label, different account/routing num"""
+    def test_create_contact_409_status_code_duplicate_contact_with_same_label(
+        self,
+    ):
+        """test adding a duplicate contact with same label,
+        different account/routing num"""
         # mock return value of get_contacts to return default EXAMPLE_CONTACT
         self.mocked_db.return_value.get_contacts.return_value = [
             create_new_contact()
         ]
         # create example contact request with new account_num and routing_num
-        duplicate_contact = create_new_contact(account_num="1231231231", routing_num="123123123")
+        duplicate_contact = create_new_contact(
+            account_num="1231231231", routing_num="123123123"
+        )
         # send request to test client
         response = self.test_app.post(
             "/contacts/{}".format(EXAMPLE_USER),
@@ -178,11 +188,15 @@ class TestContacts(unittest.TestCase):
             response.data, b"contact already exists with that label"
         )
 
-    def test_create_contact_400_status_code_invalid_account_number_less_than_ten_digits(self,):
+    def test_create_contact_400_status_code_invalid_account_number_less_than_ten_digits(  # noqa: E501
+        self,
+    ):
         """test adding a contact with invalid account numbers"""
         # test for each invalid number in INVALID_ACCOUNT_NUMS
         for invalid_account_number in INVALID_ACCOUNT_NUMS:
-            invalid_contact = create_new_contact(account_num=invalid_account_number)
+            invalid_contact = create_new_contact(
+                account_num=invalid_account_number
+            )
             # send request to test client
             response = self.test_app.post(
                 "/contacts/{}".format(EXAMPLE_USER),
@@ -194,11 +208,15 @@ class TestContacts(unittest.TestCase):
             # assert we get correct error message
             self.assertEqual(response.data, b"invalid account number")
 
-    def test_create_contact_400_status_code_invalid_routing_number_more_than_nine_digits(self,):
+    def test_create_contact_400_status_code_invalid_routing_number_more_than_nine_digits(  # noqa: E501
+        self,
+    ):
         """test adding a contact with invalid routing number"""
         # test for each invalid number in INVALID_ROUTING_NUMS
         for invalid_routing_number in INVALID_ROUTING_NUMS:
-            invalid_contact = create_new_contact(routing_num=invalid_routing_number)
+            invalid_contact = create_new_contact(
+                routing_num=invalid_routing_number
+            )
             # send request to test client
             response = self.test_app.post(
                 "/contacts/{}".format(EXAMPLE_USER),
@@ -210,8 +228,11 @@ class TestContacts(unittest.TestCase):
             # assert we get correct error message
             self.assertEqual(response.data, b"invalid routing number")
 
-    def test_create_contact_400_status_code_is_external_routing_num_equals_local_routing(self,):
-        """test adding a contact with same routing number as contact service local routing number"""
+    def test_create_contact_400_status_code_is_external_routing_num_equals_local_routing(  # noqa: E501
+        self,
+    ):
+        """test adding a contact with same routing number as contact
+        service local routing number"""
         # create example contact request
         example_contact = create_new_contact()
         # set contact service LOCAL_ROUTING to EXAMPLE_CONTACT routing_num
@@ -229,8 +250,10 @@ class TestContacts(unittest.TestCase):
         # assert we get correct error message
         self.assertEqual(response.data, b"invalid routing number")
 
-    def test_create_contact_400_status_code_invalid_labels(self,):
-        """test adding a contact with invalid labels """
+    def test_create_contact_400_status_code_invalid_labels(
+        self,
+    ):
+        """test adding a contact with invalid labels"""
         # test for each invalid label in INVALID_LABELS
         for invalid_label in INVALID_LABELS:
             invalid_contact = create_new_contact(label=invalid_label)
@@ -319,7 +342,9 @@ class TestContacts(unittest.TestCase):
     def test_get_contacts_500_get_contacts_failure(self):
         """test getting contacts but throws SQL error"""
         # mock return value of get_contacts to throw an error
-        self.mocked_db.return_value.get_contacts.side_effect = SQLAlchemyError()
+        self.mocked_db.return_value.get_contacts.side_effect = (
+            SQLAlchemyError()
+        )
         # send request to test client
         response = self.test_app.get(
             "/contacts/{}".format(EXAMPLE_USER), headers=EXAMPLE_HEADERS
@@ -327,6 +352,4 @@ class TestContacts(unittest.TestCase):
         # assert 200 response code
         self.assertEqual(response.status_code, 500)
         # assert we get correct error message
-        self.assertEqual(
-            response.data, b"failed to retrieve contacts list"
-        )
+        self.assertEqual(response.data, b"failed to retrieve contacts list")
