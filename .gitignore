@@ -214,3 +214,6 @@ go/
 
 src/accounts/accounts-db/initdb/*.sh
 DEPLOYMENT_GUIDE.md
+
+# local documentation
+*-local.md
