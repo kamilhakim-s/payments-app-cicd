@@ -33,7 +33,9 @@ from opentelemetry.sdk.trace.export import BatchSpanProcessor
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.propagate import set_global_textmap
 from opentelemetry.exporter.cloud_trace import CloudTraceSpanExporter
-from opentelemetry.propagators.cloud_trace_propagator import CloudTraceFormatPropagator
+from opentelemetry.propagators.cloud_trace_propagator import (
+    CloudTraceFormatPropagator,
+)
 from opentelemetry.instrumentation.flask import FlaskInstrumentor
 
 from db import ContactsDb
@@ -157,30 +159,47 @@ def create_app():
             raise UserWarning("missing required field(s)")
 
         # Validate account number (must be 10 digits)
-        if req["account_num"] is None or not re.match(r"\A[0-9]{10}\Z", req["account_num"]):
+        if req["account_num"] is None or not re.match(
+            r"\A[0-9]{10}\Z", req["account_num"]
+        ):
             raise UserWarning("invalid account number")
         # Validate routing number (must be 9 digits)
-        if req["routing_num"] is None or not re.match(r"\A[0-9]{9}\Z", req["routing_num"]):
+        if req["routing_num"] is None or not re.match(
+            r"\A[0-9]{9}\Z", req["routing_num"]
+        ):
             raise UserWarning("invalid routing number")
         # Only allow external accounts to deposit
-        if (req["is_external"] and req["routing_num"] == app.config["LOCAL_ROUTING"]):
+        if (
+            req["is_external"]
+            and req["routing_num"] == app.config["LOCAL_ROUTING"]
+        ):
             raise UserWarning("invalid routing number")
         # Validate label
-        # Must be >0 and <=30 chars, alphanumeric and spaces, can't start with space
-        if req["label"] is None or not re.match(r"^[0-9a-zA-Z][0-9a-zA-Z ]{0,29}$", req["label"]):
+        # Must be >0 and <=30 chars, alphanumeric and spaces,
+        # can't start with space
+        if req["label"] is None or not re.match(
+            r"^[0-9a-zA-Z][0-9a-zA-Z ]{0,29}$", req["label"]
+        ):
             raise UserWarning("invalid account label")
 
     def _check_contact_allowed(username, accountid, req):
         """Check that this contact is allowed to be created"""
-        app.logger.debug("checking that this contact is allowed to be created: %s", str(req))
+        app.logger.debug(
+            "checking that this contact is allowed to be created: %s", str(req)
+        )
         # Don't allow self reference
-        if (req["account_num"] == accountid and req["routing_num"] == app.config["LOCAL_ROUTING"]):
+        if (
+            req["account_num"] == accountid
+            and req["routing_num"] == app.config["LOCAL_ROUTING"]
+        ):
             raise ValueError("may not add yourself to contacts")
 
         # Don't allow identical contacts
         for contact in contacts_db.get_contacts(username):
-            if (contact["account_num"] == req["account_num"]
-                    and contact["routing_num"] == req["routing_num"]):
+            if (
+                contact["account_num"] == req["account_num"]
+                and contact["routing_num"] == req["routing_num"]
+            ):
                 raise ValueError("account already exists as a contact")
 
             if contact["label"] == req["label"]:
@@ -197,7 +216,7 @@ def create_app():
     app.logger.info("Starting contacts service.")
 
     # Set up tracing and export spans to Cloud Trace.
-    if os.environ['ENABLE_TRACING'] == "true":
+    if os.environ["ENABLE_TRACING"] == "true":
         app.logger.info("✅ Tracing enabled.")
         # Set up tracing and export spans to Cloud Trace
         trace.set_tracer_provider(TracerProvider())
