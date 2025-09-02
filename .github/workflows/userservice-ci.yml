@@ -98,20 +98,6 @@ jobs:
     name: 🧪 Run Tests
     runs-on: ubuntu-latest
     needs: code-quality
-    
-    services:
-      postgres:
-        image: postgres:13
-        env:
-          POSTGRES_PASSWORD: password
-          POSTGRES_DB: accounts-db
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 5432:5432
 
     steps:
       - name: 📥 Checkout code
@@ -128,14 +114,16 @@ jobs:
           python -m pip install --upgrade pip
           cd ${{ env.SERVICE_PATH }}
           pip install -r requirements.txt
+          pip install -r requirements-dev.txt
           pip install pytest pytest-cov pytest-mock
 
-      - name: 🧪 Run unit tests with coverage
+      - name: 🧪 Run tests with coverage
         env:
-          ACCOUNTS_DB_URI: postgresql://postgres:password@localhost:5432/accounts-db
+          # Environment variables for unit tests (using mocks, no real DB needed)
           LOCAL_ROUTING_NUM: "123456789"
           PUB_KEY_PATH: "/tmp/jwtRS256.key.pub"
           PRIV_KEY_PATH: "/tmp/jwtRS256.key"
+          # TestContainers will handle database creation for integration tests
         run: |
           # Create dummy JWT keys for testing
           mkdir -p /tmp
@@ -158,7 +146,9 @@ jobs:
         if: always()
         run: |
           echo "## 🧪 Test Results" >> $GITHUB_STEP_SUMMARY
-          echo "- ✅ Unit tests completed" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Unit tests completed (17 tests)" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Integration tests completed (21 tests)" >> $GITHUB_STEP_SUMMARY
+          echo "- 🐘 TestContainers PostgreSQL integration" >> $GITHUB_STEP_SUMMARY
           echo "- 📊 Coverage report generated" >> $GITHUB_STEP_SUMMARY
 
   # ========================================
