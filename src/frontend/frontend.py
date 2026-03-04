@@ -28,6 +28,7 @@ from time import sleep
 import requests
 from requests.exceptions import HTTPError, RequestException
 import jwt
+from urllib.parse import urlparse
 from flask import Flask, abort, jsonify, make_response, redirect, \
     render_template, request, url_for
 
@@ -535,10 +536,53 @@ def create_app():
             resp = make_response(redirect(redirect_uri + '#error=access_denied', 302))
         return resp
 
+    def _validate_redirect_uri(redirect_uri):
+        """
+        Validate the provided redirect_uri to mitigate SSRF.
+
+        Only allow HTTPS URLs whose host belongs to an expected domain.
+        Returns the original redirect_uri if valid, otherwise None.
+        """
+        if not redirect_uri:
+            return None
+        try:
+            parsed = urlparse(redirect_uri)
+        except Exception as e:
+            app.logger.error("Failed to parse redirect_uri '%s': %s", redirect_uri, e)
+            return None
+
+        if parsed.scheme != 'https':
+            app.logger.warning("Invalid redirect_uri scheme '%s' for URI '%s'", parsed.scheme, redirect_uri)
+            return None
+
+        host = parsed.hostname
+        if not host:
+            app.logger.warning("Missing host in redirect_uri '%s'", redirect_uri)
+            return None
+
+        # Example allowlist check: require host to end with a configured suffix, if provided.
+        allowed_suffix = os.getenv('ALLOWED_REDIRECT_HOST_SUFFIX')
+        if allowed_suffix:
+            if not host.endswith(allowed_suffix):
+                app.logger.warning(
+                    "Host '%s' in redirect_uri '%s' does not match allowed suffix '%s'",
+                    host, redirect_uri, allowed_suffix
+                )
+                return None
+
+        return redirect_uri
+
     def _auth_callback_helper(state, redirect_uri, token):
+        validated_redirect_uri = _validate_redirect_uri(redirect_uri)
+        if not validated_redirect_uri:
+            app.logger.error("Rejected untrusted redirect_uri '%s'", redirect_uri)
+            # Fall back to a generic error page under this service.
+            return make_response(
+                redirect(url_for('index', _external=True, _scheme=app.config['SCHEME']) + '#error=invalid_redirect', 302)
+            )
         try:
             app.logger.debug('Retrieving authorization code.')
-            callback_response = requests.post(url=redirect_uri,
+            callback_response = requests.post(url=validated_redirect_uri,
                                               data={'state': state, 'id_token': token},
                                               timeout=app.config['BACKEND_TIMEOUT'],
                                               allow_redirects=False)
@@ -548,10 +592,10 @@ def create_app():
                 return make_response(redirect(location, 302))
 
             app.logger.error('Unexpected response status: %s', callback_response.status_code)
-            return make_response(redirect(redirect_uri + '#error=server_error', 302))
+            return make_response(redirect(validated_redirect_uri + '#error=server_error', 302))
         except requests.exceptions.RequestException as err:
             app.logger.error('Error retrieving auth code: %s', str(err))
-        return make_response(redirect(redirect_uri + '#error=server_error', 302))
+        return make_response(redirect(validated_redirect_uri + '#error=server_error', 302))
 
     @app.route("/signup", methods=['GET'])
     def signup_page():
